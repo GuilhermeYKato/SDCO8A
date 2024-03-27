@@ -1,6 +1,6 @@
 
 /**
- * Lab1: Leitura de Base de Dados Nao-Distribuida
+ * Lab2: Leitura de Base de Dados Nao-Distribuida
  * 
  * Autor: Caio Brito
  * Autor: Guilherme Kato
@@ -14,13 +14,7 @@ import java.net.Socket;
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.SecureRandom;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Scanner;
-import java.util.Set;
 import java.util.Random;
 
 public class Servidor {
@@ -141,44 +135,85 @@ public class Servidor {
 		}
 	}
 
+	public void parserFortuna(){
+		
+	}
+
 	public void iniciar() {
 		System.out.println("Servidor iniciado na porta: " + porta);
 		FileReader fr = new FileReader();
 		HashMap hm = new HashMap<Integer, String>();
 		try {
 			fr.parser(hm);
-			// fr.read(hm);
-			// fr.write(hm);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
 		try {
+			// Criar porta de recepcao
 			server = new ServerSocket(porta);
 			socket = server.accept(); // Processo fica bloqueado, ah espera de conexoes
 			while (true) {
-				// Criar porta de recepcao
-
+				
 				// Criar os fluxos de entrada e saida
 				entrada = new DataInputStream(socket.getInputStream());
 				saida = new DataOutputStream(socket.getOutputStream());
 
 				mensagemCliente = entrada.readUTF();
 
-				System.out.println(mensagemCliente);
-				String resultado = "";
-				if (mensagemCliente.equals(
-						"{\n\"method\": \"read\",\"args\": [\"\"]\n}")) {
-					fr.read(hm);
+				// Extraindo dados do JSON
+				//////////////////////////////////////////
 
-					resultado = "{\n"+" \"result\": "+ "\"" +msgFortuna+"\""+"\n}";
-				} else {
-					resultado = mensagemCliente;
-					fr.write(hm, resultado);
+				// Convertendo a sequência de bytes em uma string
+				String jsonString = new String(mensagemCliente);
+
+				// Removendo caracteres indesejados do JSON
+				jsonString = jsonString.replace("{", "");
+				jsonString = jsonString.replace("}", "");
+				jsonString = jsonString.replace("\"", "");
+				jsonString = jsonString.replace("[", "");
+				jsonString = jsonString.replace("]", "");
+
+				// Separando o JSON em tokens usando ","
+				String[] tokens = jsonString.split(",");
+
+				// Criando um vetor para armazenar os valores extraídos
+				String[] values = new String[4];
+				for (String token : tokens) {
+					String[] pair = token.split(":");
+					if (pair.length == 2) {
+						String key = pair[0].trim();
+						String value = pair[1].trim();
+						switch (key) {
+							case "method":
+								values[0] = value;
+								break;
+							case "args":
+								values[2] = value;
+								break;
+							case "mensagem":
+								values[3] = value;
+								break;
+						}
+					}
 				}
 
+				// Compara se eh READ ou WRITE
+				String resultado = "";
+				String msgParaCliente = "";
+				if (values[0].equals("read")) {
+					fr.read(hm);
+					msgParaCliente = "{\n"+" \"result\": "+ "\"" +msgFortuna+"\""+"\n}";
+
+				} else {
+					resultado = values[2];
+					// Criando formato JSON
+					msgParaCliente = "{\n" + "\"result\": " + "\"" +resultado+"\"\n}";
+					fr.write(hm, resultado);
+				}
+				///////////////////////////////////////////
 				
 				// Envio dos dados (resultado)
-				saida.writeUTF(resultado);
+				saida.writeUTF(msgParaCliente);
 
 				// socket.close();
 			}

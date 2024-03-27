@@ -62,7 +62,7 @@ public class Cliente {
             String json = "{\n\"method\": \"read\",\"args\": [\"\"]\n}";
             saida.writeUTF(json);
             String resultado = entrada.readUTF();
-            System.out.println("Mensagem recebida do servidor: " + resultado);
+            System.out.println("Mensagem recebida do servidor: \n" + resultado);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -74,7 +74,7 @@ public class Cliente {
             saida.writeUTF(json);
             System.out.println("Mensagem enviada para o servidor.");
             String resultado = entrada.readUTF();
-            System.out.println("Mensagem recebida do servidor: " + resultado);
+            System.out.println("Mensagem recebida do servidor: \n" + resultado);
         } catch (Exception e) {
             e.printStackTrace();
         }
